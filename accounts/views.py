@@ -1,4 +1,4 @@
-from .permissions import IsDealer
+from .permissions import IsDealer, IsCustomer, IsBusiness
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -26,6 +26,26 @@ class DealerTestView(APIView):
     def get(self, request):
         return Response({
             "message": "Welcome Dealer!",
+            "username": request.user.username,
+            "role": request.user.role
+        })
+
+class CustomerTestView(APIView):
+    permission_classes = [IsCustomer]
+
+    def get(self, request):
+        return Response({
+            "message": "Welcome Customer!",
+            "username": request.user.username,
+            "role": request.user.role
+        })
+
+class BusinessTestView(APIView):
+    permission_classes = [IsBusiness]
+
+    def get(self, request):
+        return Response({
+            "message": "Welcome Business User!",
             "username": request.user.username,
             "role": request.user.role
         })
