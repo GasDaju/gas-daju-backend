@@ -1,3 +1,24 @@
-from django.shortcuts import render
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from accounts.permissions import IsDealer
+from .models import Inventory
+from .serializers import InventorySerializer
 
-# Create your views here.
+
+class InventoryListCreateView(generics.ListCreateAPIView):
+    serializer_class = InventorySerializer
+    permission_classes = [IsAuthenticated, IsDealer]
+
+    def get_queryset(self):
+        return Inventory.objects.filter(dealer__user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(dealer=self.request.user.dealer_profile)
+
+
+class InventoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = InventorySerializer
+    permission_classes = [IsAuthenticated, IsDealer]
+
+    def get_queryset(self):
+        return Inventory.objects.filter(dealer__user=self.request.user)
