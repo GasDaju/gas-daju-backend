@@ -22,3 +22,9 @@ class OrderSerializer(serializers.ModelSerializer):
                 "Quantity must be greater than zero."
             )
         return value
+
+
+class DealerOrderStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= Order
+        fields= ['status']

@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 from accounts.permissions import IsCustomer, IsDealer
 from .models import Order
-from .serializers import OrderSerializer
+from .serializers import OrderSerializer, DealerOrderStatusSerializer
 
 
 class CustomerOrderListCreateView(generics.ListCreateAPIView):
@@ -41,3 +41,47 @@ class DealerOrderListView(generics.ListAPIView):
         return Order.objects.filter(
             dealer__user= self.request.user
         )
+    
+
+class DealerOrderStatusUpdateView(generics.UpdateAPIView):
+    serializer_class = DealerOrderStatusSerializer
+    permission_classes = [IsAuthenticated, IsDealer]
+    http_method_names = ['patch']
+
+    def get_queryset(self):
+        return Order.objects.filter(
+            dealer__user=self.request.user
+        )
+
+    def perform_update(self, serializer):
+        order = self.get_object()
+        new_status = serializer.validated_data.get('status')
+
+        if new_status not in [
+            Order.Status.ACCEPTED,
+            Order.Status.REJECTED,
+            Order.Status.COMPLETED
+        ]:
+            raise ValidationError("Invalid order status.")
+
+        if order.status == Order.Status.PENDING:
+            if new_status not in [
+                Order.Status.ACCEPTED,
+                Order.Status.REJECTED
+            ]:
+                raise ValidationError(
+                    "Pending orders can only be accepted or rejected."
+                )
+
+        elif order.status == Order.Status.ACCEPTED:
+            if new_status != Order.Status.COMPLETED:
+                raise ValidationError(
+                    "Accepted orders can only be completed."
+                )
+
+        else:
+            raise ValidationError(
+                "This order cannot be updated from its current status."
+            )
+
+        serializer.save()
